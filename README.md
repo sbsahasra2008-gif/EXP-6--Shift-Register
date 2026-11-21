@@ -23,6 +23,56 @@ Serial output: sout = Q[3]   (the bit about to be shifted out)
 
 Testbench Program
 
+// gedit tb6.v
+ 
+module tb6;
+    reg  clk, rst, sin;
+    wire sout;
+    wire [3:0] Q;
+ 
+    // Instantiate the shift register
+    shift_reg uut (
+        .clk(clk),
+        .rst(rst),
+        .sin(sin),
+        .sout(sout),
+        .Q(Q)
+    );
+ 
+    // ---- Clock generation: 10 time-unit period ----
+    initial clk = 0;
+    always #5 clk = ~clk;
+ 
+    initial begin
+        // ---- VCD dump setup ----
+        $dumpfile("shift_reg.vcd");   // name of the VCD file to be generated
+        $dumpvars(0, tb6);              // dump all signals in this testbench hierarchy
+ 
+        $monitor("Time=%0t rst=%b clk=%b sin=%b | Q=%b sout=%b",
+                  $time, rst, clk, sin, Q, sout);
+ 
+        // ---- Apply asynchronous reset ----
+        rst = 1; sin = 0;
+        #7  rst = 0;
+ 
+        // ---- Serially shift in the bit pattern 1 0 1 1 ----
+        @(negedge clk); sin = 1;
+        @(negedge clk); sin = 0;
+        @(negedge clk); sin = 1;
+        @(negedge clk); sin = 1;
+ 
+        // ---- Hold sin = 0 and observe the pattern shift out ----
+        @(negedge clk); sin = 0;
+        @(negedge clk);
+        @(negedge clk);
+ 
+        // ---- Apply reset again mid-simulation ----
+        @(negedge clk); rst = 1;
+        @(negedge clk); rst = 0; sin = 1;
+ 
+        #20 $finish;
+    end
+endmodule
 
 
 
@@ -83,6 +133,7 @@ The design was compiled and simulated using Synopsys VCS, and the functionality 
 
 ## Output
 
+<img width="1911" height="1020" alt="Screenshot 2026-11-21 085334" src="https://github.com/user-attachments/assets/8e65efa8-5479-4e77-a5e4-3d5e56e6428a" />
 
 
 ## Viva-Voce Questions
